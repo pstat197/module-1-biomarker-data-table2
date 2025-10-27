@@ -1,21 +1,12 @@
-# ============================================================
-# MODULE 1 – BIOMARKER (Question 4)
-# Goal: Find a simpler or improved biomarker panel
-# ============================================================
-
-# --- Load packages ---
 library(tidyverse)
 library(tidymodels)
 library(randomForest)
 library(modelr)
 library(yardstick)
 
-# --- Load cleaned dataset ---
 load("data/biomarker-clean.RData")
 
-# ============================================================
-# 1️⃣  Prepare training / test data (80/20 split)
-# ============================================================
+# Prepare training / test data (80/20 split)
 
 set.seed(42)
 split <- initial_split(biomarker_clean, prop = 0.8)
@@ -26,9 +17,7 @@ test  <- testing(split)
 train <- train %>% mutate(class = factor(if_else(group == "ASD", "ASD", "TD")))
 test  <- test %>% mutate(class = factor(if_else(group == "ASD", "ASD", "TD")))
 
-# ============================================================
-# 2️⃣  LASSO logistic regression – Simpler panel
-# ============================================================
+# LASSO logistic regression – Simpler panel
 
 # Recipe (drop ados and group)
 lasso_rec <- recipe(class ~ ., data = train %>% select(-ados, -group))
@@ -36,8 +25,8 @@ lasso_rec <- recipe(class ~ ., data = train %>% select(-ados, -group))
 # Define model with L1 penalty
 lasso_mod <- logistic_reg(
   mode = "classification",
-  penalty = tune(),   # λ to tune
-  mixture = 1         # pure LASSO (L1)
+  penalty = tune(),
+  mixture = 1
 ) %>%
   set_engine("glmnet")
 
@@ -70,9 +59,7 @@ lasso_final <- finalize_workflow(lasso_wf, best_lambda)
 # Fit final LASSO model
 lasso_fit <- fit(lasso_final, data = train)
 
-# ============================================================
-# 3️⃣  Extract selected (non-zero) coefficients = simpler panel
-# ============================================================
+# Extract selected (non-zero) coefficients = simpler panel
 
 coef_df <- tidy(extract_fit_parsnip(lasso_fit)) %>%
   filter(term != "(Intercept)", estimate != 0)
@@ -81,9 +68,7 @@ lasso_genes <- coef_df %>% pull(term)
 cat("Selected LASSO biomarker panel (", length(lasso_genes), " proteins):\n")
 print(lasso_genes)
 
-# ============================================================
-# 4️⃣  Evaluate LASSO model on test set
-# ============================================================
+# Evaluate LASSO model on test set
 
 lasso_results <- predict(lasso_fit, test, type = "prob") %>%
   bind_cols(predict(lasso_fit, test)) %>%
@@ -103,9 +88,7 @@ lasso_metrics <- metrics_lasso(
 cat("\nPerformance of Simpler LASSO Panel:\n")
 print(lasso_metrics)
 
-# ============================================================
-# 5️⃣  Alternative model – Random Forest (potential improvement)
-# ============================================================
+# Alternative model – Random Forest (potential improvement)
 
 rf_model <- rand_forest(trees = 1000, mtry = 30, min_n = 5) %>%
   set_engine("ranger") %>%
@@ -133,9 +116,7 @@ rf_metrics <- metrics_lasso(
 cat("\nPerformance of Random Forest Model:\n")
 print(rf_metrics)
 
-# ============================================================
-# 6️⃣  Compare baseline vs new models
-# ============================================================
+# Compare baseline vs new models
 
 results_q4 <- bind_rows(
   lasso_metrics %>% mutate(Model = "Simpler LASSO panel"),
@@ -148,9 +129,7 @@ results_q4 %>%
   arrange(desc(roc_auc)) %>%
   print()
 
-# ============================================================
-# 7️⃣  Visualize ROC AUC comparison
-# ============================================================
+# Visualize ROC AUC comparison
 
 results_q4 %>%
   filter(.metric == "roc_auc") %>%
@@ -161,7 +140,3 @@ results_q4 %>%
   labs(title = "Benchmark: Simpler vs. Improved Biomarker Panels (Question 4)",
        y = "ROC AUC", x = NULL) +
   theme(legend.position = "none")
-
-# ============================================================
-# End of script
-# ============================================================

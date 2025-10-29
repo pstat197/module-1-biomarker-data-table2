@@ -72,9 +72,21 @@ auc_value <- auc(roc_obj)
 
 cat("ROC AUC:", round(auc_value, 3), "\n")
 
+# Benchmark with in-class analysis? But inclass-analysis.R gives an error
+
 # Attempting to refit
 best_lambda <- cv_out$lambda.1se
 lasso_probs <- as.numeric(predict(cv_out, newx = x_test, s = best_lambda,
                                   type = "response"))
 lasso_pred <- factor(lasso_probs > 0.5, labels = c("TD", "ASD"))
 # Fix error
+
+# Section TA code from in-class analysis.R
+# evaluate errors on test set
+class_metrics <- metric_set(accuracy,
+                            roc_auc)
+
+a = testing(biomarker_split) %>%
+  add_predictions(fit, type = 'response') %>%
+  mutate(estimate=factor(pred > 0.5)) %>%
+  mutate(class=factor(class)) 

@@ -19,6 +19,10 @@ Use this as a template. Keep the headers and remove all other text. In all, your
 ```{r}
 # load any other packages and read data here
 library(tidyverse)
+library(tidymodels)
+library(randomForest)
+library(modelr)
+library(yardstick)
 ```
 
 ## Abstract
@@ -27,7 +31,9 @@ Write a brief one-paragraph abstract that describes the contents of your write-u
 
 ## Dataset
 
-Write a brief data description, including: how data were obtained; sample characteristics; variables measured; and data preprocessing. This can be largely based on the source paper and should not exceed 1-2 paragraphs.
+*Write a brief data description, including: how data were obtained; sample characteristics; variables measured; and data preprocessing. This can be largely based on the source paper and should not exceed 1-2 paragraphs.*
+
+The data came from serum samples collected from 154 male children, including 76 diagnosed with autism spectrum disorder and 78 typically developing controls, within ages 18 months old to 8 years old. Blood samples were analyzed using a multiplex proteomic assay that quantified 1,317 proteins. After quality control, 1,125 proteins were retained for statistical analysis. The data set also included variables such as age, comorbidities, medication, and behavioral measures of ASD symptoms. As for the preprocessing, the authors performed log-transformation, centering and scaling of protein concentrations, and trimming of outliers. Ultimately, this data set identified proteins that showed different expressions between ASD and TD groups. It also helped with building predictive models of ASD classification.
 
 ## Summary of published analysis
 

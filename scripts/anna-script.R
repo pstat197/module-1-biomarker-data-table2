@@ -408,7 +408,7 @@ cat("\nScript completed all three modifications successfully!\n")
 
 
 # MODIFICATION 1 (Proper Train/Test Split):
-# Your results show this modification working as expected - by performing feature 
+# The results show this modification working as expected - by performing feature 
 # selection only on training data, we get realistic performance estimates without
 # data leakage. The performance metrics (AUC ~0.69-0.76, Accuracy ~0.64-0.75) 
 # represent honest estimates of how the model would perform on truly unseen data.
@@ -416,13 +416,13 @@ cat("\nScript completed all three modifications successfully!\n")
 # performed on the full dataset.
 
 # MODIFICATION 2 (Larger Number of Proteins):
-# Your script successfully selected 15 proteins using fuzzy intersection across
+# The script successfully selected 15 proteins using fuzzy intersection across
 # all strategies, confirming that using more proteins (20 for selection) increases
 # the pool available for the final fuzzy scoring. This helped avoid the "no proteins
 # selected" problem that can occur with hard intersection when using only 10 proteins.
 
 # MODIFICATION 3 (Fuzzy Intersection):
-# Your results clearly demonstrate the power of fuzzy intersection with different
+# The results clearly demonstrate the power of fuzzy intersection with different
 # weighting strategies:
 #
 # EQUAL WEIGHT (0.5/0.5): AUC=0.69, Accuracy=0.638

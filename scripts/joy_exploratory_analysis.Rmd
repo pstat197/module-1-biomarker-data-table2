@@ -1,0 +1,147 @@
+```{r}
+library(tidyverse)
+library(patchwork)
+```
+
+```{r}
+# Read in the cleaned data
+load('../data/biomarker-clean.RData')
+```
+
+```{r}
+# Get the variable names of the raw data for comparison
+var_names <- read_csv('../data/biomarker-raw.csv', 
+                     col_names = F, 
+                     n_max = 2, 
+                     col_select = -(1:2)) %>%
+  t() %>%
+  as_tibble() %>%
+  rename(name = V1, 
+         abbreviation = V2) %>%
+  na.omit()
+
+# Read in the raw data
+biomarker_raw <- read_csv('../data/biomarker-raw.csv', 
+         skip = 2,
+         col_select = -2L,
+         col_names = c('group', 
+                       'empty',
+                       pull(var_names, abbreviation),
+                       'ados'),
+         na = c('-', '')) %>%
+  filter(!is.na(group))
+```
+
+```{r}
+# Re-create the preprocessing steps
+
+# Trim outliers
+trim <- function(x, .at){
+  x[abs(x) > .at] <- sign(x[abs(x) > .at])*.at
+  return(x)
+}
+
+# Separate each step in data transformation
+# Log10 transform
+biomarker_log <- biomarker_raw %>%
+  mutate(across(.cols = -c(group, ados), 
+                ~ log10(.x)))
+
+# Log10 + Scale
+biomarker_log_scaled <- biomarker_raw %>%
+  mutate(across(.cols = -c(group, ados), 
+                ~ scale(log10(.x))[, 1]))
+
+# Log10 + Scale + Trim
+biomarker_log_scaled_trimmed <- biomarker_log_scaled %>%
+  mutate(across(.cols = -c(group, ados), 
+                ~ trim(.x, .at = 3)))
+```
+
+```{r}
+# Prepare data at different stages of preprocessing
+# Pick a protein to visualize
+protein <- "IRF1"
+
+df_raw <- biomarker_raw %>% 
+  select(group, all_of(protein)) %>% 
+  mutate(stage = "1. Raw")
+
+df_log <- biomarker_log %>% 
+  select(group, all_of(protein)) %>% 
+  mutate(stage = "2. Log10")
+
+df_scaled <- biomarker_log_scaled %>% 
+  select(group, all_of(protein)) %>% 
+  mutate(stage = "3. Log10 + Scaled")
+
+df_trimmed <- biomarker_log_scaled_trimmed %>% 
+  select(group, all_of(protein)) %>% 
+  mutate(stage = "4. Log10 + Scaled + Trimmed")
+
+comparison_df <- bind_rows(df_raw, df_log, df_scaled, df_trimmed) %>%
+  mutate(stage = factor(stage, levels = c("1. Raw", 
+                                          "2. Log10", 
+                                          "3. Log10 + Scaled", 
+                                          "4. Log10 + Scaled + Trimmed")))
+```
+
+```{r}
+# Plot the distributions at each stage
+ggplot(comparison_df, aes(x = !!sym(protein), fill = group)) +
+  geom_density(alpha = 0.7) +
+  facet_wrap(~stage, scales = "free") +
+  labs(
+    title = paste("Distribution of", protein, "at Each Preprocessing Stage"),
+    x = "Value",
+    y = "Density",
+    fill = "Group"
+  )
+```
+
+```{r}
+# Show the impact of the trimming function
+df_before_trim <- biomarker_log_scaled %>% 
+  select(-group, -ados) %>% 
+  as.matrix()
+
+df_after_trim <- biomarker_log_scaled_trimmed %>% 
+  select(-group, -ados) %>% 
+  as.matrix()
+
+# Calculate total number of data points
+total_points <- sum(!is.na(df_before_trim))
+
+# Find how many points were outside the +/- 3 threshold
+trimmed_points <- sum(abs(df_before_trim) > 3, na.rm = TRUE)
+percent_trimmed <- (trimmed_points / total_points) * 100
+
+# Print the findings (these are the results for your report)
+cat("Total protein measurements:", total_points, "\n")
+cat("Measurements trimmed (value > 3 or < -3):", trimmed_points, "\n")
+cat("Percentage of data trimmed:", round(percent_trimmed, 4), "%\n")
+```
+
+```{r}
+# Visualize the impact of trimming
+trim_df <- tibble(
+  value_before_trim = as.vector(df_before_trim),
+  value_after_trim = as.vector(df_after_trim)
+) %>%
+  filter(!is.na(value_before_trim))
+
+# Scatterplot
+ggplot(trim_df, aes(x = value_before_trim, y = value_after_trim)) +
+  geom_point(alpha = 0.1) +
+  # Add a reference line
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  # Add lines showing the trimming threshold
+  geom_vline(xintercept = c(-3, 3), color = "blue", linetype = "dotted") +
+  geom_hline(yintercept = c(-3, 3), color = "blue", linetype = "dotted") +
+  labs(
+    title = "Impact of trimming on All Protein Data",
+    x = "Value Before Trimming (Scaled)",
+    y = "Value After Trimming (Scaled)"
+  )
+```
+

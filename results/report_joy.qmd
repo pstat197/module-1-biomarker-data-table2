@@ -46,8 +46,47 @@ The data came from serum samples collected from 154 male children, including 76 
 Summarize your findings here. I've included some subheaders in a way that seems natural to me; you can structure this section however you like.
 
 ### Impact of preprocessing and outliers
+Here is a more thorough write-up for that section. You can copy and paste this directly into your `report.qmd` file.
 
-Tasks 1-2
+-----
+
+### Impact of preprocessing and outliers
+The data preprocessing steps, defined in `scripts/preprocessing.R`, transform the data to make it suitable for modeling. They correct for outliers and data skew.
+
+#### Outlier Problem
+The outliers problem is shown in Figure 1, which plots the distribution of the mean - median difference for all 1,125 proteins. In a symmetrical distribution, the mean and median are nearly identical, so their difference would be close to 0. However, Figure 1 shows that for the vast majority of proteins, the mean is significantly larger than the median. For example, there are more than 100 proteins whose means are $10^2$ (100) points higher than their medians, since the x-axis is on a log scale. This indicates a right-skew across the whole dataset. These outliers make the raw data distributions uninterpretable and would violate the assumptions of many statistical models.
+
+![Figure 1](distribution_of_skewness.png)
+
+#### Preprocessing Steps
+The preprocessing pipeline provided in `preprocessing.R` addresses this problem in steps. We picked protein IRF1 to Figure 2 visualizes the effect of each step on the IRF1 protein:
+
+- 1. Raw: The data in this plot is so skewed by outliers that the entire distribution is at the far left, and the x-axis is stretched out.
+
+- 2. Log10: The `log10()` transformation pulls in the extreme high-value outliers, transforming the heavily skewed data into a more symmetric distribution. The x-axis is now in log-space and the underlying structure of the data for the two groups (ASD vs. TD) is visible.
+
+- 3. Log10 + Scaled: This step applies a standard `scale()` (centering and scaling) to the log-transformed data. The shape of the distribution is identical to Panel 2, but the x-axis is now centered around 0 and in units of standard deviation. The scaling allows all proteins to be comparable and prepares for the trimming step.
+
+- 4. Log10 + Scaled + Trimmed: This plot shows the final data after applying the `trim()` function. For this specific protein, the distribution looks virtually identical to Panel 3, suggesting that few IRF1 data points were outside the trim threshold.
+
+![Figure 2](preprocessing_steps.png)
+
+#### Preprocessing: Trimming
+The `trim()` function is the final outlier-handling step, which caps all scaled values at an absolute threshold of 3. While its effect on the shape of the IRF1 distribution in Figure 1 was minimal, its impact across the entire dataset is significant.
+
+Figure 3 plots the "before" vs. "after" value for every single protein measurement in the dataset. 
+
+- The dense cluster of points along the red dashed $y=x$ line represents the vast majority of data points that were unaffected because their scaled values were already between -3 and 3.
+
+- The horizontal line of points at $y = 3$ shows all the high-value outliers. Their original scaled values on the x-axis ranged from 3 to over 10, but the `trim()` function pulled them down and capped their final value at exactly 3.
+
+- Similarly, the horizontal line at $y = -3$ shows the low-value outliers that were pushed up and capped at -3.
+
+![Figure 3](trimming.png)
+
+By calculating the total data points and the data points trimmed, we got that the trimming function was applied to 2,379 data points, which is 1.173% of the total dataset. This shows the substantial impact of the trimming step in the preprocessing pipeline. 
+
+In conclusion, the preprocessing pipeline uses a log-transformation to correct for severe biological skew, scales the log-transformed data, and then applies a trimming function to remove the most extreme values. This ensures the final data is robust and suitable for modeling.
 
 ### Methodological variations
 

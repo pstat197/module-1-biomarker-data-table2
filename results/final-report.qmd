@@ -1,6 +1,5 @@
 ---
 title: "Biomarkers of ASD"
-subtitle: "If you want a subtitle put it here"
 author: "Anna Gornyitzki, Cathy Fang, Johanna Jansen, Joy Chang, Lorretta Lu"
 date: November 5, 2025
 published-title: "Updated"

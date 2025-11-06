@@ -58,43 +58,6 @@ Summarize your findings here. I've included some subheaders in a way that seems 
 Each method modification noticeably affected the results and gave useful insights into the model’s behavior. The first modification, applying a proper train/test split, worked as intended. By performing feature selection only on the training data, the model avoided data leakage and produced more realistic performance estimates. The performance metrics (AUC around 0.69–0.76 and accuracy around 0.64–0.75) give an honest picture of how the model would perform on unseen data. These results are more conservative than what we would get if feature selection were done on the entire dataset, which would likely lead to overly optimistic performance.
 The second modification, increasing the number of proteins used in the selection process, also improved the workflow. By selecting 20 proteins instead of 10, the model had a larger pool to draw from during fuzzy intersection, which prevented the issue of “no proteins selected” that can happen with strict intersections. The final selection included 15 proteins, showing that expanding the feature set helps maintain stability and coverage across different selection strategies.
 The third modification, adding fuzzy intersection with different weighting strategies, had the most noticeable effect on performance. The equal-weight strategy (0.5/0.5) achieved an AUC of 0.69 and accuracy of 0.638, producing a balanced selection that included proteins like FSTL1, DR6, and Notch 1—proteins that performed well in both methods. The t-test-heavy weighting (0.7/0.3) slightly improved the AUC to 0.71 and accuracy to 0.66, giving more weight to statistical significance and ranking DERM higher, though it favored specificity (0.792) over sensitivity (0.522). The RF-heavy weighting (0.3/0.7) performed the best overall, with an AUC of 0.761 and accuracy of 0.745, offering a better balance between sensitivity (0.739) and specificity (0.75). It also changed the top protein rankings, bringing MRC2 and TSP4 into higher positions. Across all weighting methods, FSTL1 remained the top protein (score around 0.999), while others shifted depending on the weighting. Overall, the fuzzy intersection approach proved effective in combining the strengths of both the t-test and random forest methods, improving performance and producing a more robust and interpretable feature selection process.
-```{r}
-library(knitr)
-
-mod_summary <- data.frame(
-Modification = c(
-"Proper Train/Test Split",
-"Larger Number of Proteins",
-"Fuzzy Intersection (Weighted Combination)"
-),
-Goal_Change = c(
-"Prevent data leakage by selecting features only on training data",
-"Increase selection pool from 10→20 proteins for stability",
-"Blend t-test and RF rankings using fuzzy weights"
-),
-Main_Outcome = c(
-"Produces realistic, generalizable estimates",
-"Avoids 'no proteins selected' errors and expands overlap",
-"Enhances performance via complementary feature weighting"
-),
-Performance = c(
-"AUC 0.69–0.76, Acc 0.64–0.75",
-"AUC ≈ 0.70, Acc ≈ 0.65",
-"Equal (0.69/0.64), T-test (0.71/0.66), RF (0.761/0.745 best)"
-),
-Key_Insights = c(
-"Conservative but honest metrics; prevents data leakage",
-"Improves intersection stability and feature coverage",
-"RF-heavy strategy yields best performance; FSTL1 consistently top"
-)
-)
-
-kable(mod_summary,
-caption = "Comparison of All Methodological Variations",
-align = "l")
-
-```
-
 
 ### Improved classifier
 

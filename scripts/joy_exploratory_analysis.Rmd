@@ -1,3 +1,15 @@
+---
+title: "Homework Assignment 2"
+author: "Joy Chang"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(fig.width=7, fig.height=5, echo = TRUE, message = FALSE, warning = FALSE)
+options(digits = 4)
+```
+
 ```{r}
 library(tidyverse)
 library(patchwork)
@@ -33,6 +45,41 @@ biomarker_raw <- read_csv('../data/biomarker-raw.csv',
 ```
 
 ```{r}
+# Show the impact of outliers in raw data
+
+biomarker_raw_long <- biomarker_raw %>%
+  select(-ados) %>%
+  pivot_longer(
+    cols = -group, 
+    names_to = "protein", 
+    values_to = "value"
+  ) %>%
+  filter(!is.na(value))
+
+# Calculate stats for each protein
+all_protein_stats <- biomarker_raw_long %>%
+  group_by(protein) %>%
+  summarise(
+    Mean = mean(value),
+    Median = median(value),
+    Max = max(value)
+  ) %>%
+  mutate(
+    mean_median_diff = Mean - Median
+  )
+
+# Visualize the skewness (mean_median_diff)
+ggplot(all_protein_stats, aes(x = mean_median_diff)) +
+  geom_histogram(bins = 50, alpha = 0.7) +
+  scale_x_log10() + 
+  labs(
+    title = "Distribution of Skewness (Mean - Median)",
+    x = "Difference between Mean and Median (Log Scale)",
+    y = "Number of Proteins"
+  )
+```
+
+```{r}
 # Re-create the preprocessing steps
 
 # Trim outliers
@@ -59,10 +106,10 @@ biomarker_log_scaled_trimmed <- biomarker_log_scaled %>%
 ```
 
 ```{r}
-# Prepare data at different stages of preprocessing
 # Pick a protein to visualize
 protein <- "IRF1"
 
+# Prepare data at different stages of preprocessing
 df_raw <- biomarker_raw %>% 
   select(group, all_of(protein)) %>% 
   mutate(stage = "1. Raw")
@@ -92,7 +139,7 @@ ggplot(comparison_df, aes(x = !!sym(protein), fill = group)) +
   geom_density(alpha = 0.7) +
   facet_wrap(~stage, scales = "free") +
   labs(
-    title = paste("Distribution of", protein, "at Each Preprocessing Stage"),
+    title = paste("Distribution of", protein, "at Each Preprocessing Step"),
     x = "Value",
     y = "Density",
     fill = "Group"
@@ -118,7 +165,7 @@ percent_trimmed <- (trimmed_points / total_points) * 100
 
 # Print the findings (these are the results for your report)
 cat("Total protein measurements:", total_points, "\n")
-cat("Measurements trimmed (value > 3 or < -3):", trimmed_points, "\n")
+cat("Observations trimmed (value > 3 or < -3):", trimmed_points, "\n")
 cat("Percentage of data trimmed:", round(percent_trimmed, 4), "%\n")
 ```
 

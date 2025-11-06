@@ -69,31 +69,3 @@ Both LASSO and Improved Random Forest models were evaluated on their ability to 
 Although both the LASSO and Random Forest models demonstrated strong classification performance in distinguishing ASD from TD participants, their methodological approaches and outcomes highlight distinct advantages. LASSO’s built-in feature selection produced a concise biomarker panel. This emphasizes parsimony and reproducibility. In contrast, the Random Forest offered greater flexibility to model nonlinear interactions and complex dependencies among proteins. The model’s broader feature importance distribution suggests that ASD-related patterns may involve subtle relationships beyond simple additive effects. 
 
 Overall, this suggests that the LASSO approach not only simplifies the biomarker panel but also improves classification accuracy relative to both the Random Forest and the original in-class model. The comparison demonstrates that LASSO is better suited for identifying interpretable biomarkers, whereas Random Forest provides complementary insights into potential nonlinear relationships.
-
-```{r}
-library(knitr)
-
-# Model performance summary
-model_comparison <- data.frame(
-  Model = c("LASSO Logistic Regression", "Random Forest"),
-  AUC = c(0.92, 0.83),
-  Accuracy = c(0.87, 0.80),
-  Main_Strength = c("Sparse, interpretable biomarker selection", 
-                    "Captures complex nonlinear relationships"),
-  Key_Limitation = c("Assumes linear additive effects", 
-                     "Less interpretable, prone to overfitting")
-)
-
-# Display neatly formatted table
-kable(
-  model_comparison,
-  caption = "Comparison of LASSO and Random Forest Models for ASD Classification",
-  align = "lccll"
-)
-
-```
-
-
-
-
-

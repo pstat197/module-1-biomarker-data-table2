@@ -1,0 +1,136 @@
+---
+title: "Biomarkers of ASD"
+author: "Anna Gornyitzki, Cathy Fang, Johanna Jansen, Joy Chang, Lorretta Lu"
+date: November 5, 2025
+published-title: "Updated"
+editor: source
+format: html
+code-copy: true
+execute:
+  message: false
+  warning: false
+  echo: false
+  cache: true
+---
+
+Use this as a template. Keep the headers and remove all other text. In all, your report can be quite short. When it is complete, render and then push changes to your team repository.
+
+```{r}
+# load any other packages and read data here
+library(tidyverse)
+library(tidymodels)
+library(randomForest)
+library(modelr)
+library(yardstick)
+```
+
+## Abstract
+
+Our report analyzes serum protein biomarkers related to autism spectrum disorder (ASD) using data from Hewitson et al. (2021). The dataset included 154 male children (76 diagnosed with ASD and 78 typically developing) and over 1,100 quantified proteins. Across four main tasks, we examined how data preprocessing and modeling choices affect biomarker discovery and classification accuracy. In the first two tasks, we explored how log-transformation and outlier trimming improved data quality and reduced skewness. In Task 3, we tested different analysis setups, including using a proper train/test split, selecting more top proteins, and combining feature rankings with a fuzzy intersection approach. These changes improved generalizability and model performance, with the best configuration reaching an AUC of 0.761 and accuracy of 0.745. In the final task, we compared LASSO logistic regression and Random Forest models, finding that LASSO achieved the highest AUC (0.92) while remaining simpler and more interpretable. Overall, our results show that thoughtful preprocessing and model design can significantly improve the reliability of ASD biomarker identification.
+
+## Dataset
+
+The data came from serum samples collected from 154 male children, including 76 diagnosed with autism spectrum disorder and 78 typically developing controls, within ages 18 months old to 8 years old. Blood samples were analyzed using a multiplex proteomic assay that quantified 1,317 proteins. After quality control, 1,125 proteins were retained for statistical analysis. The data set also included variables such as age, comorbidities, medication, and behavioral measures of ASD symptoms. As for the preprocessing, the authors performed log-transformation, centering and scaling of protein concentrations, and trimming of outliers. Ultimately, this data set identified proteins that showed different expressions between ASD and TD groups. It also helped with building predictive models of ASD classification.
+
+## Summary of published analysis
+
+*Summarize the methodology of the paper in 1-3 paragraphs. You need not explain the methods in depth as we did in class; just indicate what methods were used and how they were combined. If possible, include a diagram that depicts the methodological design. (Quarto has support for [GraphViz and Mermaid flowcharts](https://quarto.org/docs/authoring/diagrams.html).) Provide key results: the proteins selected for the classifier and the estimated accuracy.*
+
+
+In *Task 3* of the project, we explored how different methodological choices affect biomarker classification results for distinguishing ASD from TD participants. Using the provided cleaned serum protein dataset, we implemented a proper train/test split to prevent data leakage, performed feature selection with both t-tests and Random Forests on the training set, and combined their outputs using a fuzzy intersection approach. This method assigned adjustable weights to the statistical and machine learning scores to identify the most robust proteins. The best-performing configuration (RF-heavy weighting of 0.3/0.7) achieved an AUC of 0.761 and accuracy of 0.745, highlighting proteins such as FSTL1, MRC2, TSP4, DR6, and Notch 1 as key features for classification.
+
+In *Task 4* we evaluated two machine learning approaches for classifying participants as ASD or TD based on blood protein biomarkers. Using the cleaned data set, we first split the data into training (80%) and testing (20%) subsets. A LASSO Logistic Regression Model was implemented through the tidymodels framework, with five-fold cross-validation used to tune the penalty parameter (lambda) to balance model simplicity and predictive accuracy. The LASSO Model applies regularization to shrink less informative protein coefficients toward zero, thereby identifying a smaller "core" biomarker panel. In parallel, an Improved Random Forest model with 1,000 trees was trained using the same training data to serve as a non-linear benchmark. Both models were evaluated on the test set using standard classification metrics: accuracy, sensitivity, specificity, and ROC AUC, to assess their predictive performance and compare model efficiency versus complexity.
+
+## Findings
+
+Summarize your findings here. I've included some subheaders in a way that seems natural to me; you can structure this section however you like.
+
+### Impact of preprocessing and outliers
+
+**Tasks 1-2**
+
+### Methodological variations
+
+**Task 3**
+
+*Anna and Johanna*
+
+Each method modification noticeably affected the results and gave useful insights into the model’s behavior. The first modification, applying a proper train/test split, worked as intended. By performing feature selection only on the training data, the model avoided data leakage and produced more realistic performance estimates. The performance metrics (AUC around 0.69–0.76 and accuracy around 0.64–0.75) give an honest picture of how the model would perform on unseen data. These results are more conservative than what we would get if feature selection were done on the entire dataset, which would likely lead to overly optimistic performance.
+The second modification, increasing the number of proteins used in the selection process, also improved the workflow. By selecting 20 proteins instead of 10, the model had a larger pool to draw from during fuzzy intersection, which prevented the issue of “no proteins selected” that can happen with strict intersections. The final selection included 15 proteins, showing that expanding the feature set helps maintain stability and coverage across different selection strategies.
+The third modification, adding fuzzy intersection with different weighting strategies, had the most noticeable effect on performance. The equal-weight strategy (0.5/0.5) achieved an AUC of 0.69 and accuracy of 0.638, producing a balanced selection that included proteins like FSTL1, DR6, and Notch 1—proteins that performed well in both methods. The t-test-heavy weighting (0.7/0.3) slightly improved the AUC to 0.71 and accuracy to 0.66, giving more weight to statistical significance and ranking DERM higher, though it favored specificity (0.792) over sensitivity (0.522). The RF-heavy weighting (0.3/0.7) performed the best overall, with an AUC of 0.761 and accuracy of 0.745, offering a better balance between sensitivity (0.739) and specificity (0.75). It also changed the top protein rankings, bringing MRC2 and TSP4 into higher positions. Across all weighting methods, FSTL1 remained the top protein (score around 0.999), while others shifted depending on the weighting. Overall, the fuzzy intersection approach proved effective in combining the strengths of both the t-test and random forest methods, improving performance and producing a more robust and interpretable feature selection process.
+```{r}
+library(knitr)
+
+mod_summary <- data.frame(
+Modification = c(
+"Proper Train/Test Split",
+"Larger Number of Proteins",
+"Fuzzy Intersection (Weighted Combination)"
+),
+Goal_Change = c(
+"Prevent data leakage by selecting features only on training data",
+"Increase selection pool from 10→20 proteins for stability",
+"Blend t-test and RF rankings using fuzzy weights"
+),
+Main_Outcome = c(
+"Produces realistic, generalizable estimates",
+"Avoids 'no proteins selected' errors and expands overlap",
+"Enhances performance via complementary feature weighting"
+),
+Performance = c(
+"AUC 0.69–0.76, Acc 0.64–0.75",
+"AUC ≈ 0.70, Acc ≈ 0.65",
+"Equal (0.69/0.64), T-test (0.71/0.66), RF (0.761/0.745 best)"
+),
+Key_Insights = c(
+"Conservative but honest metrics; prevents data leakage",
+"Improves intersection stability and feature coverage",
+"RF-heavy strategy yields best performance; FSTL1 consistently top"
+)
+)
+
+kable(mod_summary,
+caption = "Comparison of All Methodological Variations",
+align = "l")
+
+```
+
+
+### Improved classifier
+
+**Task 4**
+
+*Cathy and Lorretta*
+
+Both LASSO and Improved Random Forest models were evaluated on their ability to distinguish between ASD and TD participants using the biomarker data set. The Simpler LASSO panel achieved a higher ROC AUC value of 0.917, compared to 0.829 for the Improved Random Forest model, indicating that the LASSO classifier was better at ranking ASD cases above TD cases overall. The Random Forest achieved an accuracy of 0.774, with sensitivity equal to 0.667 and specificity equal to 0.875, showing that it correctly identified most TD cases but missed a portion of ASD cases. In contrast, the LASSO model produced a smoother ROC curve with superior area under the curve, demonstrating stronger discriminative ability despite relying on fewer proteins. 
+Although both the LASSO and Random Forest models demonstrated strong classification performance in distinguishing ASD from TD participants, their methodological approaches and outcomes highlight distinct advantages. LASSO’s built-in feature selection produced a concise biomarker panel. This emphasizes parsimony and reproducibility. In contrast, the Random Forest offered greater flexibility to model nonlinear interactions and complex dependencies among proteins. The model’s broader feature importance distribution suggests that ASD-related patterns may involve subtle relationships beyond simple additive effects. 
+
+Overall, this suggests that the LASSO approach not only simplifies the biomarker panel but also improves classification accuracy relative to both the Random Forest and the original in-class model. The comparison demonstrates that LASSO is better suited for identifying interpretable biomarkers, whereas Random Forest provides complementary insights into potential nonlinear relationships.
+
+```{r}
+library(knitr)
+
+# Model performance summary
+model_comparison <- data.frame(
+  Model = c("LASSO Logistic Regression", "Random Forest"),
+  AUC = c(0.92, 0.83),
+  Accuracy = c(0.87, 0.80),
+  Main_Strength = c("Sparse, interpretable biomarker selection", 
+                    "Captures complex nonlinear relationships"),
+  Key_Limitation = c("Assumes linear additive effects", 
+                     "Less interpretable, prone to overfitting")
+)
+
+# Display neatly formatted table
+kable(
+  model_comparison,
+  caption = "Comparison of LASSO and Random Forest Models for ASD Classification",
+  align = "lccll"
+)
+
+```
+
+
+
+
+
